@@ -28,11 +28,11 @@ function handleMouseDown(event){
 
 }
 
-
-
 cvs.onmousedown = handleMouseDown;
 
 //NODES________________________________________________
+
+
 var nodes = [];
 //Node has bgImage, image, color, text, x, y
 
@@ -55,6 +55,8 @@ function CheckCollsion(node, x, y){
     var imgW = node.bgImage.width;
     var imgH = node.bgImage.height;
 
+    ctx.fillRect(imgX, imgY, imgW, imgH);
+
     if (x > imgX && x <= imgX + imgW && y > imgY && y <= imgY + imgH )
     {
         ret = 1;
@@ -75,8 +77,7 @@ function DeleteNode(node){
 }
 
 function DrawNode(value){
-
-    
+ 
     var x = value.x - (value.bgImage.width / 2);
     var y = value.y - (value.bgImage.height / 2);
 
@@ -87,24 +88,85 @@ function DrawNode(value){
 
     //console.log(value.bgImage);
 }
+
+//JSON_____________________________________________
+
+var usedseneces = [];
+var orderSentences = [];
+var sentenceIndex = 0;
+var maxSentences = 0;
+var jsonData;
+
+function ReadJson(){
+    //var userdata = JSON.parse("data.json");
+    //var user1_name = userdata[0];
+    
+    var request = new XMLHttpRequest();
+    request.open("GET","data.json", false);
+    request.send(null);
+    jsonData = JSON.parse(request.responseText);
+
+    maxSentences = jsonData.Sentences.length;
+
+
+}
+
+
+
+function OrderSentences(){
+    for (var i = 0; i < maxSentences; i++){
+        orderSentences[i] = i;
+    }
+
+    Shuffle(orderSentences);
+
+}
+
+function LoadSentence(){
+    
+    CreateNodesfromSrting(jsonData.Sentences[orderSentences[sentenceIndex]]);
+    sentenceIndex++;
+
+}
+
 //GAME_____________________________________________
 
-var words;
 var correctWords;
 var wordIndex = 0;
 var wordsNum = 0;
 var bottomstring = "";
+
+var punctuation = 0;
+var sum = 10;
+var rest = 5;
 
 
 function CreateNodesfromSrting(string){
   
     correctWords = string.split(" ");
 
+    var shuffledwords = [...correctWords];
+
+    Shuffle(shuffledwords);
     wordsNum = correctWords.length;
 
     for (var i = 0; i < wordsNum; i++){
-        CreateNode(bgTest, 200 * i + 100, 100, 1, correctWords[i]);
+        CreateNode(bgTest, 200 * i + 100, 100, 1, shuffledwords[i]);
     }
+
+
+}
+
+function Shuffle(a) {
+    var j, x, i;
+    for (i = a.length - 1; i > 0; i--) {
+        j = Math.floor(Math.random() * (i + 1));
+        x = a[i];
+        a[i] = a[j];
+        a[j] = x;
+    }
+    
+    return a;
 }
 
 function CheckWord(str){
@@ -112,24 +174,43 @@ function CheckWord(str){
     if (correctWords[wordIndex] === str){
         bottomstring += " " + str;
         wordIndex++;
+
+        punctuation += sum;
+
+        if (wordIndex == correctWords.length) Reset();
         return true;
     }
     else {
+        punctuation -= rest;
         console.log("Wrong word");
+
     }
 
     return false;
 }
 
+function Reset(){
+    
+    wordIndex = 0;
+    wordsNum = 0;
+    correctWords = [];
+    bottomstring = "";
+
+    if ( sentenceIndex <= maxSentences - 1) LoadSentence();
+    
+}
+
+//MAIN LOOP_____________________________________________
+
 function Main(){
 
     //Start
-
-    //CreateNode(bgTest, 100, 100, 1, "Hello")
-    //CreateNode(bgTest, 300, 100, 1, "Hi")
-    //CreateNode(bgTest, 600, 100, 1, "Halo")
-
-    CreateNodesfromSrting("Halo how are you");
+    //CreateNodesfromSrting("Halo how are you");
+    //Shuffle(nodes);
+    
+    ReadJson();
+    OrderSentences();
+    LoadSentence();
 
     Update();
 }
@@ -145,12 +226,15 @@ function Update(){
 
 
     //Draw nodes
-    nodes.forEach(DrawNode);
+    if (nodes) nodes.forEach(DrawNode);
+ 
     
 
     //Draw bottomstring
     ctx.fillText(bottomstring, cvs.width/2, cvs.height * 7/8);
 
+    ctx.fillText("Puntuation:", cvs.width * 4/6, cvs.height * 7/8);
+    ctx.fillText(punctuation, cvs.width * 4.5/6, cvs.height * 7/8);
 
     requestAnimationFrame(Update);
 }
