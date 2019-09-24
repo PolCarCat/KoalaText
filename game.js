@@ -4,8 +4,9 @@ var ctx = cvs.getContext("2d");
 
 //Setup
 
-ctx.font = " 20px Arial";
+ctx.font = " 100px Verdana";
 ctx.textAlign = "center";
+
 
 
 //Test Image
@@ -30,8 +31,10 @@ function handleMouseDown(event){
 
 cvs.onmousedown = handleMouseDown;
 
-//NODES________________________________________________
 
+
+
+//NODES________________________________________________
 
 var nodes = [];
 //Node has bgImage, image, color, text, x, y
@@ -78,13 +81,21 @@ function DeleteNode(node){
 
 function DrawNode(value){
  
-    var x = value.x - (value.bgImage.width / 2);
-    var y = value.y - (value.bgImage.height / 2);
+    var x = (value.x * cvs.width) - (value.bgImage.width / 2);
+    var y = (value.y * cvs.height) - (value.bgImage.height / 2);
 
-    ctx.drawImage(value.bgImage, x , y );
+    ctx.drawImage(value.bgImage, x  , y  );
+
+    
+    var fontsize =  cvs.width * ( (10 - value.text.length) / value.bgImage.width );
 
 
-    ctx.fillText(value.text, value.x, value.y);
+    ctx.font = fontsize + "px Arial Black";
+
+    var metrics = ctx.measureText(value.text);
+   
+
+    ctx.fillText(value.text, (value.x * cvs.width) -  (metrics.width / 2), value.y * cvs.height);
 
     //console.log(value.bgImage);
 }
@@ -136,9 +147,7 @@ var wordIndex = 0;
 var wordsNum = 0;
 var bottomstring = "";
 
-var punctuation = 0;
-var sum = 10;
-var rest = 5;
+
 
 
 function CreateNodesfromSrting(string){
@@ -151,11 +160,12 @@ function CreateNodesfromSrting(string){
     wordsNum = correctWords.length;
 
     for (var i = 0; i < wordsNum; i++){
-        CreateNode(bgTest, 200 * i + 100, 100, 1, shuffledwords[i]);
+        CreateNode(bgTest,  i/wordsNum, 0.5, 1, shuffledwords[i]);
     }
 
-
 }
+
+
 
 function Shuffle(a) {
     var j, x, i;
@@ -175,14 +185,14 @@ function CheckWord(str){
         bottomstring += " " + str;
         wordIndex++;
 
-        punctuation += sum;
+        puntuation += sum;
 
         if (wordIndex == correctWords.length) Reset();
         return true;
     }
     else {
-        punctuation -= rest;
-        console.log("Wrong word");
+        puntuation -= rest;
+        ShowWrong();
 
     }
 
@@ -200,6 +210,35 @@ function Reset(){
     
 }
 
+//GAME DYNAMCIS_________________________________________
+
+var timer = 0;
+var time = 0;
+
+var wrongTime = 1000;
+
+var timerLabel;
+var wrong = false;
+
+var wrongTimer;
+
+var puntuation = 0;
+var sum = 10;
+var rest = 5;
+
+function UpadteTimeLeft(){
+    
+}
+
+function ShowWrong(){
+    wrong = true;
+    window.clearTimeout(wrongTimer);
+
+    wrongTimer = window.setTimeout(function(){wrong = false;}, wrongTime);
+}
+
+
+
 //MAIN LOOP_____________________________________________
 
 function Main(){
@@ -208,6 +247,8 @@ function Main(){
     //CreateNodesfromSrting("Halo how are you");
     //Shuffle(nodes);
     
+    OnResize();
+
     ReadJson();
     OrderSentences();
     LoadSentence();
@@ -225,20 +266,29 @@ function Update(){
     PreUpdate();
 
 
+    window.onresize = OnResize;
+
+
     //Draw nodes
     if (nodes) nodes.forEach(DrawNode);
  
     
-
     //Draw bottomstring
     ctx.fillText(bottomstring, cvs.width/2, cvs.height * 7/8);
 
     ctx.fillText("Puntuation:", cvs.width * 4/6, cvs.height * 7/8);
-    ctx.fillText(punctuation, cvs.width * 4.5/6, cvs.height * 7/8);
+    ctx.fillText(puntuation, cvs.width * 4.5/6, cvs.height * 7/8);
+
+    if (wrong) ctx.fillText("WRONG!", cvs.width / 2, cvs.height * 5/8);
+
 
     requestAnimationFrame(Update);
 }
 
+function OnResize(){
+    cvs.width  = window.innerWidth;
+    cvs.height = window.innerHeight;
+}
 
 
 Main();
